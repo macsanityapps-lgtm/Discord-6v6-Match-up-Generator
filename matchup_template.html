@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>6v6 Matchup Card</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 900px;
+    height: 600px;
+    background: #080b1a;
+    font-family: 'Barlow Condensed', sans-serif;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card {
+    width: 900px;
+    height: 600px;
+    position: relative;
+    background:
+      radial-gradient(ellipse at 25% 50%, rgba(0,80,200,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse at 75% 50%, rgba(200,80,0,0.12) 0%, transparent 60%),
+      linear-gradient(180deg, #0a0d1f 0%, #060810 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Scanline texture overlay */
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* ── TITLE ── */
+  .title-bar {
+    margin-top: 18px;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+  .title-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 5px;
+    color: rgba(212,175,55,0.6);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .title-main {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    text-shadow: 0 0 30px rgba(212,175,55,0.4);
+  }
+  .title-date {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #d4af37;
+    letter-spacing: 3px;
+  }
+
+  /* Gold divider line */
+  .gold-line {
+    width: 340px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #d4af37, transparent);
+    margin: 6px auto 0;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    width: 100%;
+    padding: 10px 18px 14px;
+    gap: 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ── TEAM PANEL ── */
+  .team-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+
+  .team-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 14px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+  .team-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.15;
+  }
+  .team1 .team-header {
+    background: linear-gradient(135deg, rgba(30,60,180,0.8), rgba(10,30,100,0.8));
+    border: 1px solid rgba(80,120,255,0.4);
+    box-shadow: 0 0 20px rgba(30,80,255,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .team2 .team-header {
+    background: linear-gradient(135deg, rgba(180,80,10,0.8), rgba(100,40,0,0.8));
+    border: 1px solid rgba(255,140,40,0.4);
+    box-shadow: 0 0 20px rgba(255,100,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .team-header-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255,255,255,0.4);
+  }
+  .team-header-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    margin: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  /* ── PLAYER ROW ── */
+  .player-row {
+    display: flex;
+    align-items: center;
+    padding: 7px 10px;
+    margin-bottom: 5px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+    border: 1px solid rgba(255,255,255,0.06);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+  .player-row::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 7px;
+    background: linear-gradient(90deg, rgba(212,175,55,0.04), transparent);
+    pointer-events: none;
+  }
+
+  /* Team 1: icon left, name right */
+  .team1 .player-row { flex-direction: row; }
+  /* Team 2: name left, icon right */
+  .team2 .player-row { flex-direction: row-reverse; }
+
+  .player-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid rgba(212,175,55,0.5);
+    background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(0,0,0,0.3));
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 0 8px rgba(212,175,55,0.2);
+  }
+
+  .player-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px;
+  }
+  .team2 .player-info { flex-direction: row-reverse; }
+
+  .role-badge {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .role-ORB  { background: rgba(80,160,255,0.25); color: #5af; border: 1px solid rgba(80,160,255,0.4); }
+  .role-DPS  { background: rgba(255,60,60,0.25);  color: #f77; border: 1px solid rgba(255,60,60,0.4); }
+  .role-KA   { background: rgba(60,220,100,0.25); color: #6f6; border: 1px solid rgba(60,220,100,0.4); }
+  .role-UTIL { background: rgba(180,80,255,0.25); color: #c8f; border: 1px solid rgba(180,80,255,0.4); }
+  .role-ANY  { background: rgba(255,200,40,0.2);  color: #fd8; border: 1px solid rgba(255,200,40,0.4); }
+
+  .player-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    text-shadow: 0 0 10px rgba(255,255,255,0.2);
+  }
+  .player-name span {
+    color: #d4af37;
+    font-weight: 600;
+  }
+
+  /* ── VS CENTER ── */
+  .vs-center {
+    width: 80px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding-top: 30px;
+  }
+  .vs-circle {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,175,55,0.15) 0%, rgba(0,0,0,0.6) 100%);
+    border: 2px solid #d4af37;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 0 20px rgba(212,175,55,0.4),
+      0 0 40px rgba(212,175,55,0.15),
+      inset 0 0 20px rgba(212,175,55,0.1);
+    position: relative;
+  }
+  .vs-circle::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 1px solid rgba(212,175,55,0.2);
+  }
+  .vs-text {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: #d4af37;
+    letter-spacing: 2px;
+    text-shadow: 0 0 15px rgba(212,175,55,0.8);
+  }
+  .vs-line {
+    width: 2px;
+    height: 60px;
+    background: linear-gradient(180deg, rgba(212,175,55,0.6), transparent);
+  }
+  .vs-line.bottom {
+    background: linear-gradient(0deg, rgba(212,175,55,0.6), transparent);
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 14px;
+    gap: 4px;
+  }
+  .footer-line {
+    width: 500px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.5), transparent);
+    margin-bottom: 6px;
+  }
+  .footer-text {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 8px;
+    color: rgba(212,175,55,0.6);
+    text-transform: uppercase;
+  }
+
+  /* Corner accents */
+  .corner {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    z-index: 3;
+  }
+  .corner.tl { top: 8px; left: 8px; border-top: 2px solid #d4af37; border-left: 2px solid #d4af37; }
+  .corner.tr { top: 8px; right: 8px; border-top: 2px solid #d4af37; border-right: 2px solid #d4af37; }
+  .corner.bl { bottom: 8px; left: 8px; border-bottom: 2px solid #d4af37; border-left: 2px solid #d4af37; }
+  .corner.br { bottom: 8px; right: 8px; border-bottom: 2px solid #d4af37; border-right: 2px solid #d4af37; }
+</style>
+</head>
+<body>
+<div class="card">
+  <!-- Corner accents -->
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <!-- Title -->
+  <div class="title-bar">
+    <span class="title-label">True Battlegrounds</span>
+    <div class="title-main">TEST G1 &nbsp;<span class="title-date">06/02</span></div>
+    <div class="gold-line"></div>
+  </div>
+
+  <!-- Main content -->
+  <div class="content">
+
+    <!-- Team 1 -->
+    <div class="team-panel team1">
+      <div class="team-header">
+        <div class="team-header-icon">⚔️</div>
+        <span class="team-header-name">Team 1</span>
+      </div>
+
+      <div class="player-row">
+        <div class="player-icon">🛡️</div>
+        <div class="player-info">
+          <span class="role-badge role-ORB">ORB</span>
+          <span class="player-name"><span>@</span>Berz</span>
+        </div>
+      </div>
+      <div class="player-row">
+        <div class="player-icon">🛡️</div>
+        <div class="player-info">
+          <span class="role-badge role-ORB">ORB</span>
+          <span class="player-name"><span>@</span>AwiE</span>
+        </div>
+      </div>
+      <div class="player-row">
+        <div class="player-icon">🎯</div>
+        <div class="player-info">
+          <span class="role-badge role-DPS">DPS</span>
+          <span class="player-name"><span>@</span>BORIS</span>
+        </div>
+      </div>
+      <div class="player-row">
+        <div class="player-icon">💚</div>
+        <div class="player-info">
+          <span class="role-badge role-KA">KA</span>
+          <span class="player-name"><span>@</span>Knackss</span>
+        </div>
+      </div>
+      <div class="player-row">
+        <div class="player-icon">⚙️</div>
+        <div class="player-info">
+          <span class="role-badge role-UTIL">UTIL</span>
+          <span class="player-name"><span>@</span>Sham</span>
+        </div>
+      </div>
+      <div class="player-row">
+        <div class="player-icon">⭐</div>
+        <div class="player-info">
+          <span class="role-badge role-ANY">ANY</span>
+          <span class="player-name"><span>@</span>LaSaP</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VS -->
+    <div class="vs-center">
+      <div class="vs-line"></div>
+      <div class="vs-circle">
+        <span class="vs-text">VS</span>
+      </div>
+      <div class="vs-line bottom"></div>
+    </div>
+
+    <!-- Team 2 -->
+    <div class="team-panel team2">
+      <div class="team-header">
+        <span class="team-header-name">Team 2</span>
+        <div class="team-header-icon">⚔️</div>
+      </div>
+
+      <div class="player-row">
+        <div class="player-icon">🛡️</div>
+        <div class="player-info">
+          <span class="role-badge role-ORB">ORB</span>
+          <span class="player-name"><span>@</span>Lovent</span>
+        </div>
+      </div>
+      <div class="player-row">
+        <div class="player-icon">🛡️</div>
+        <div class="player-info">
+          <span class="role-badge role-ORB">ORB</span>
+          <span class="player-name"><span>@</span>merpmerp</span>
+        </div>
+      </div>
+      <div class="player-row">
+        <div class="player-icon">🎯</div>
+        <div class="player-info">
+          <span class="role-badge role-DPS">DPS</span>
+          <span class="player-name"><span>@</span>Mafee</span>
+        </div>
+      </div>
+      <div class="player-row">
+        <div class="player-icon">🎯</div>
+        <div class="player-info">
+          <span class="role-badge role-DPS">DPS</span>
+          <span class="player-name"><span>@</span>TROXZ</span>
+        </div>
+      </div>
+      <div class="player-row">
+        <div class="player-icon">⚙️</div>
+        <div class="player-info">
+          <span class="role-badge role-UTIL">UTIL</span>
+          <span class="player-name"><span>@</span>Azh</span>
+        </div>
+      </div>
+      <div class="player-row">
+        <div class="player-icon">⭐</div>
+        <div class="player-info">
+          <span class="role-badge role-ANY">ANY</span>
+          <span class="player-name"><span>@</span>XxGridxX</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-line"></div>
+    <span class="footer-text">True Battlegrounds</span>
+  </div>
+</div>
+</body>
+</html>
