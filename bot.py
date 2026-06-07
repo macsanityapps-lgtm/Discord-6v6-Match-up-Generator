@@ -42,7 +42,7 @@ class ShuffleBot(commands.Bot):
         await init_db()
         log.info("Database initialised.")
 
-        for cog in ("cogs.players", "cogs.matchup", "cogs.dev", "cogs.events"):
+        for cog in ("cogs.players", "cogs.matchup", "cogs.dev", "cogs.events", "cogs.marshal"):
             await self.load_extension(cog)
             log.info("Loaded cog: %s", cog)
 

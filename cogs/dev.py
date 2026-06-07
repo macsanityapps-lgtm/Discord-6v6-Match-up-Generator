@@ -1,10 +1,10 @@
 """
 Dev / testing cog.
 
-Commands
---------
-/mockdata   – seed 16 fake players and simulate several matches
-/cleardata  – wipe all mock/test data (players whose ID starts with mock_ or test_)
+All commands live under the /dev group:
+  /dev mock     – seed 16 fake players and simulate several matches
+  /dev clear    – wipe all mock/test data
+  /dev matches  – delete match records for a date
 """
 
 import discord
@@ -135,13 +135,16 @@ class Dev(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # ── /mockdata ──────────────────────────────────────────────────────────────
+    dev = app_commands.Group(name="dev", description="Developer / admin testing commands")
 
-    @app_commands.command(
-        name="mockdata",
+    # ── /dev mock ─────────────────────────────────────────────────────────────
+
+    @dev.command(
+        name="mock",
         description="Seed 16 mock players and simulate 6 matches to populate all leaderboards.",
     )
-    async def mockdata(self, interaction: discord.Interaction):
+    @app_commands.default_permissions(manage_guild=True)
+    async def dev_mock(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 
         # 1. Upsert all mock players
@@ -215,14 +218,14 @@ class Dev(commands.Cog):
         )
         await interaction.followup.send(embed=embed, ephemeral=True)
 
-    # ── /cleardata ─────────────────────────────────────────────────────────────
+    # ── /dev clear ────────────────────────────────────────────────────────────
 
-    @app_commands.command(
-        name="cleardata",
+    @dev.command(
+        name="clear",
         description="[Admin] Remove all mock and test data from the database.",
     )
     @app_commands.default_permissions(manage_guild=True)
-    async def cleardata(self, interaction: discord.Interaction):
+    async def dev_clear(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 
         async with aiosqlite.connect(DB_PATH) as db:
@@ -243,10 +246,10 @@ class Dev(commands.Cog):
         )
 
 
-    # ── /deletematches ─────────────────────────────────────────────────────────
+    # ── /dev matches ──────────────────────────────────────────────────────────
 
-    @app_commands.command(
-        name="deletematches",
+    @dev.command(
+        name="matches",
         description="[Mod] Delete all match records for a specific date. Defaults to today.",
     )
     @app_commands.describe(
@@ -254,7 +257,7 @@ class Dev(commands.Cog):
         confirm = "Set to True to actually delete. Leave False to preview only.",
     )
     @app_commands.default_permissions(manage_guild=True)
-    async def deletematches(
+    async def dev_matches(
         self,
         interaction: discord.Interaction,
         date: str | None = None,

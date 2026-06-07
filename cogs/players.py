@@ -5,11 +5,9 @@ Slash commands
 --------------
 /register          – register yourself (or update your info)
 /setrating         – admin: set any player's rating
-/setrole           – set your main role
-/setsubrole        – set your sub-role / class tag
+/setrole           – set your main role AND sub-role in one command
 /playerinfo        – view a player's profile + per-role stats
-/leaderboard       – overall top 10 by points
-/roleleaderboard   – top 10 for a specific role/position
+/leaderboard       – overall top 10 (optional role: filter)
 """
 
 import discord
@@ -129,48 +127,50 @@ class Players(commands.Cog):
 
     @app_commands.command(
         name="setrole",
-        description="Update your main role for matchup balancing.",
+        description="Update your main role and class tag in one go.",
     )
-    @app_commands.describe(role="Your main role.")
+    @app_commands.describe(
+        role    = "Your main role (ORB, DPS, UTIL, ANY).",
+        subrole = "Your class tag shown on the matchup card (e.g. KF, LMX, JM, SB …).",
+    )
     @app_commands.choices(role=[
         app_commands.Choice(name=r, value=r) for r in VALID_ROLES
     ])
-    async def setrole(self, interaction: discord.Interaction, role: str):
-        await upsert_player(
-            discord_id=str(interaction.user.id),
-            username=interaction.user.display_name,
-            role=role.upper(),
-        )
-        await interaction.response.send_message(
-            f"✅ Role updated to **{role.upper()}**.", ephemeral=True
-        )
+    async def setrole(
+        self,
+        interaction: discord.Interaction,
+        role: str,
+        subrole: str | None = None,
+    ):
+        role = role.upper()
 
-    # ── /setsubrole ───────────────────────────────────────────────────────────
-
-    @app_commands.command(
-        name="setsubrole",
-        description="Update your class tag shown on the matchup card (e.g. KF, LMX, JM, SB …).",
-    )
-    @app_commands.describe(subrole="Your class code. e.g. KF, LMX, JM, SB, ELI, VALK …")
-    async def setsubrole(self, interaction: discord.Interaction, subrole: str):
-        code = subrole.strip().upper()
-
-        if code not in [s.upper() for s in VALID_SUB_ROLES]:
-            valid_list = ", ".join(sorted(VALID_SUB_ROLES))
-            await interaction.response.send_message(
-                f"❌ Unknown class code `{code}`.\nValid codes: {valid_list}",
-                ephemeral=True,
+        if subrole is not None:
+            code = subrole.strip().upper()
+            if code not in [s.upper() for s in VALID_SUB_ROLES]:
+                valid_list = ", ".join(sorted(VALID_SUB_ROLES))
+                await interaction.response.send_message(
+                    f"❌ Unknown class code `{code}`.\nValid codes: {valid_list}",
+                    ephemeral=True,
+                )
+                return
+            await upsert_player(
+                discord_id=str(interaction.user.id),
+                username=interaction.user.display_name,
+                role=role,
+                sub_role=code,
             )
-            return
-
-        await upsert_player(
-            discord_id=str(interaction.user.id),
-            username=interaction.user.display_name,
-            sub_role=code,
-        )
-        await interaction.response.send_message(
-            f"✅ Sub-role updated to **{code}**.", ephemeral=True
-        )
+            await interaction.response.send_message(
+                f"✅ Role → **{role}** | Sub-role → **{code}**", ephemeral=True
+            )
+        else:
+            await upsert_player(
+                discord_id=str(interaction.user.id),
+                username=interaction.user.display_name,
+                role=role,
+            )
+            await interaction.response.send_message(
+                f"✅ Role updated to **{role}**.", ephemeral=True
+            )
 
     # ── /playerinfo ───────────────────────────────────────────────────────────
 
@@ -241,81 +241,55 @@ class Players(commands.Cog):
 
     @app_commands.command(
         name="leaderboard",
-        description="Overall top 10 players ranked by points.",
+        description="Top 10 players ranked by points. Add role: to filter by position.",
     )
-    async def leaderboard(self, interaction: discord.Interaction):
-        rows = await get_leaderboard(10)
-        if not rows:
-            await interaction.response.send_message(
-                "No players registered yet. Use `/register` to get started!",
-                ephemeral=True,
-            )
-            return
-
-        medals = ["🥇", "🥈", "🥉"] + ["▪️"] * 7
-        lines  = []
-        for i, p in enumerate(rows):
-            total = p["wins"] + p["losses"]
-            wr    = f"{p['wins']/total*100:.0f}%" if total else "—%"
-            lines.append(
-                f"{medals[i]} **{p['username']}** — **{p['points']} pts**  "
-                f"`{p['role']}`  W{p['wins']}/L{p['losses']} ({wr})"
-            )
-
-        embed = discord.Embed(
-            title="🏆 True Battlegrounds — Overall Leaderboard",
-            description="\n".join(lines),
-            colour=0xF5A623,
-        )
-        embed.set_footer(text="Points: Win +12~35  |  Loss −5~18  (varies by match result)")
-        await interaction.response.send_message(embed=embed)
-
-    # ── /roleleaderboard ──────────────────────────────────────────────────────
-
-    @app_commands.command(
-        name="roleleaderboard",
-        description="Top 10 players for a specific role/position.",
-    )
-    @app_commands.describe(role="The role slot to rank.")
+    @app_commands.describe(role="Filter by role/position. Leave blank for overall standings.")
     @app_commands.choices(role=[
         app_commands.Choice(name="ORB",       value="ORB"),
         app_commands.Choice(name="DPS",       value="DPS"),
         app_commands.Choice(name="UTIL/UBER", value="UTIL/UBER"),
         app_commands.Choice(name="ANY",       value="ANY"),
     ])
-    async def roleleaderboard(self, interaction: discord.Interaction, role: str):
+    async def leaderboard(
+        self,
+        interaction: discord.Interaction,
+        role: str | None = None,
+    ):
         rows = await get_leaderboard(10, role=role)
         if not rows:
+            label = f"**{role}**" if role else "overall"
             await interaction.response.send_message(
-                f"No stats yet for **{role}**. Play some matches first!",
+                f"No players/stats yet for {label}. Play some matches first!",
                 ephemeral=True,
             )
             return
 
+        role_icons = {"ORB": "🔮", "DPS": "⚔️", "UTIL/UBER": "🛡️", "ANY": "🎯"}
         medals = ["🥇", "🥈", "🥉"] + ["▪️"] * 7
         lines  = []
-        for i, r in enumerate(rows):
-            total = r["wins"] + r["losses"]
-            wr    = f"{r['wins']/total*100:.0f}%" if total else "—%"
+        for i, p in enumerate(rows):
+            total = p["wins"] + p["losses"]
+            wr    = f"{p['wins']/total*100:.0f}%" if total else "—%"
+            role_tag = f"`{p['role']}`  " if not role else ""
             lines.append(
-                f"{medals[i]} **{r['username']}** — **{r['points']} pts**  "
-                f"W{r['wins']}/L{r['losses']} ({wr})"
+                f"{medals[i]} **{p['username']}** — **{p['points']} pts**  "
+                f"{role_tag}W{p['wins']}/L{p['losses']} ({wr})"
             )
 
-        role_icons = {
-            "ORB":       "🔮",
-            "DPS":       "⚔️",
-            "UTIL/UBER": "🛡️",
-            "ANY":       "🎯",
-        }
-        icon = role_icons.get(role, "🎮")
+        if role:
+            icon  = role_icons.get(role, "🎮")
+            title = f"{icon} {role} Leaderboard — True Battlegrounds"
+            footer = "Stats tracked per role slot played in each match"
+        else:
+            title  = "🏆 True Battlegrounds — Overall Leaderboard"
+            footer = "Points: Win +12~35  |  Loss −5~18  (varies by match result)"
 
         embed = discord.Embed(
-            title=f"{icon} {role} Leaderboard — True Battlegrounds",
+            title=title,
             description="\n".join(lines),
-            colour=0x4A90E8,
+            colour=0xF5A623 if not role else 0x4A90E8,
         )
-        embed.set_footer(text="Stats tracked per role slot played in each match")
+        embed.set_footer(text=footer)
         await interaction.response.send_message(embed=embed)
 
 

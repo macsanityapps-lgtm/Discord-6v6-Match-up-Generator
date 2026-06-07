@@ -671,13 +671,15 @@ class Matchup(commands.Cog):
         except Exception as e:
             await interaction.followup.send(f"❌ Error generating matchup: {e}")
 
-    # ── /queue ─────────────────────────────────────────────────────────────────
+    # ── /queue group ───────────────────────────────────────────────────────────
 
-    @app_commands.command(
+    queue_group = app_commands.Group(
         name="queue",
-        description="Add yourself to the matchmaking queue. 12 players = auto-shuffle.",
+        description="Matchmaking queue commands",
     )
-    async def queue(self, interaction: discord.Interaction):
+
+    @queue_group.command(name="join", description="Join the matchmaking queue. 12 players = auto-shuffle.")
+    async def queue_join(self, interaction: discord.Interaction):
         gid = interaction.guild_id
         if gid not in self._queue:
             self._queue[gid] = []
@@ -704,16 +706,11 @@ class Matchup(commands.Cog):
         if count == TOTAL_PLAYERS:
             players = self._queue.pop(gid)
             label = f"True Battlegrounds G1  {datetime.utcnow().strftime('%m/%d')}"
-            await interaction.channel.send(
-                f"🎮 Queue full! Starting match…"
-            )
-            # We need a new interaction-like object for sending; use channel directly
+            await interaction.channel.send("🎮 Queue full! Starting match…")
             await _send_channel(interaction.channel, players, label)
 
-    # ── /leavequeue ────────────────────────────────────────────────────────────
-
-    @app_commands.command(name="leavequeue", description="Leave the matchmaking queue.")
-    async def leavequeue(self, interaction: discord.Interaction):
+    @queue_group.command(name="leave", description="Leave the matchmaking queue.")
+    async def queue_leave(self, interaction: discord.Interaction):
         gid = interaction.guild_id
         uid = str(interaction.user.id)
         queue = self._queue.get(gid, [])
@@ -729,22 +726,20 @@ class Matchup(commands.Cog):
                 "⚠️ You weren't in the queue.", ephemeral=True
             )
 
-    # ── /queuelist ─────────────────────────────────────────────────────────────
-
-    @app_commands.command(name="queuelist", description="See who's in the queue.")
-    async def queuelist(self, interaction: discord.Interaction):
+    @queue_group.command(name="list", description="See who's currently in the queue.")
+    async def queue_list(self, interaction: discord.Interaction):
         gid = interaction.guild_id
         queue = self._queue.get(gid, [])
         if not queue:
             await interaction.response.send_message(
-                "Queue is empty. Use `/queue` to join!", ephemeral=True
+                "Queue is empty. Use `/queue join` to join!", ephemeral=True
             )
             return
 
         lines = [f"{i+1}. @{p['username']}  ({p['rating']} MMR)"
                  for i, p in enumerate(queue)]
         embed = discord.Embed(
-            title=f"\U0001f3ae Queue  ({len(queue)}/{TOTAL_PLAYERS})",
+            title=f"🎮 Queue  ({len(queue)}/{TOTAL_PLAYERS})",
             description="\n".join(lines),
             colour=COLOUR_NEUTRAL,
         )
