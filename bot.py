@@ -7,6 +7,8 @@ Run with:  python bot.py
 import asyncio
 import logging
 import os
+from threading import Thread
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 import discord
 from discord.ext import commands
@@ -126,5 +128,22 @@ async def main():
         await bot.start(token)
 
 
+def run_health_server():
+    """Minimal HTTP server so Render's port scan succeeds."""
+    port = int(os.getenv("PORT", 8080))
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"OK")
+
+        def log_message(self, *args):
+            pass  # silence HTTP access logs
+
+    HTTPServer(("0.0.0.0", port), Handler).serve_forever()
+
+
 if __name__ == "__main__":
+    Thread(target=run_health_server, daemon=True).start()
     asyncio.run(main())
