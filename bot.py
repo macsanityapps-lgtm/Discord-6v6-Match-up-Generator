@@ -52,16 +52,19 @@ class ShuffleBot(commands.Bot):
         from cogs.matchup import MatchupView
         self.add_view(MatchupView())
 
-        # Sync to specific guild instantly (if GUILD_ID set), else sync globally
-        guild_id = os.getenv("GUILD_ID")
-        if guild_id:
-            guild = discord.Object(id=int(guild_id))
-            self.tree.copy_global_to(guild=guild)
-            await self.tree.sync(guild=guild)
-            log.info("Slash commands synced to guild %s (instant).", guild_id)
+        # Only sync slash commands when SYNC_COMMANDS=true (avoids rate limits on every restart)
+        if os.getenv("SYNC_COMMANDS", "false").lower() == "true":
+            guild_id = os.getenv("GUILD_ID")
+            if guild_id:
+                guild = discord.Object(id=int(guild_id))
+                self.tree.copy_global_to(guild=guild)
+                await self.tree.sync(guild=guild)
+                log.info("Slash commands synced to guild %s (instant).", guild_id)
+            else:
+                await self.tree.sync()
+                log.info("Slash commands synced globally (may take up to 1 hour).")
         else:
-            await self.tree.sync()
-            log.info("Slash commands synced globally (may take up to 1 hour).")
+            log.info("Skipping slash command sync (set SYNC_COMMANDS=true to sync).")
 
     async def on_ready(self):
         log.info("Logged in as %s (ID: %s)", self.user, self.user.id)
